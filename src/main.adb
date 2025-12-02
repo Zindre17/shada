@@ -11,8 +11,8 @@ Procedure Main is
   else
     declare
       Filename : constant String := Argument(1);
-      Bytes : Byte_Array := Load_Content(Filename);
-      Blocks : Block_Array := Pad_Content(Bytes);
+      Bytes : Byte_Array_Access := Load_Content(Filename);
+      Blocks : Block_Array_Access := Pad_Content(Bytes);
       MD : Digest := Compute_Sha_1(Blocks);
     begin
       Print_Digest(MD);

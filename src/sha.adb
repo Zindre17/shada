@@ -40,7 +40,7 @@ package body Sha is
     return A or B;
   end;
 
-  function Compute_Sha_1(M : Block_Array) return Digest is
+  function Compute_Sha_1(M : Block_Array_Access) return Digest is
     A, B, C, D, E : Word32;
 
     H0 : Word32 := 16#67452301#;

@@ -1,13 +1,13 @@
-with Ada.Streams.Stream_IO; use Ada.Streams.Stream_IO;
-use Ada.Streams;
+with Ada.Direct_IO;
 with Ada.Text_IO;
 with Data; use Data;
 with Interfaces;
 
 package body Padder is
   type i64 is new Interfaces.Unsigned_64;
+  package Byte_IO is new Ada.Direct_IO(Byte);
 
-  function Pad_Content(Content: Byte_Array) return Block_Array is
+  function Pad_Content(Content: Byte_Array_Access) return Block_Array_Access is
     SizeInBits : i64 := i64(Content'Length * 8);
     ContentSize1 : Word32 := Word32(Shift_Right(SizeInBits, 32));
     ContentSize2 : Word32 := Word32(SizeInBits rem i64(Word32'Last));
@@ -26,7 +26,7 @@ package body Padder is
     CurrentBlock: Block16 := Empty_Block;
     WordInBlock: Block_Range := 0;
     ByteInWord: Word_Builder_Range := Word_Builder_Range'Last;
-    Blocks: Block_Array(0 .. TotalBlocks) := (others => Empty_Block);
+    Blocks: Block_Array_Access := new Block_Array(0 .. TotalBlocks);
     BlockIndex: Natural := 0;
 
     procedure Increment_Block_Position is
@@ -64,27 +64,21 @@ package body Padder is
     CurrentBlock(15) := ContentSize2;
     Blocks(Blocks'Last) := CurrentBlock;
     return blocks;
-  end Pad_Content;
+  end;
 
-  function Load_Content(Filename: String) return Byte_Array is
-    File : File_Type;
+  function Load_Content(Filename: String) return Byte_Array_Access is
+    File : Byte_IO.File_Type;
   begin
-    Open (File, In_File, Filename);
-    return Load_Bytes(File);
-  end Load_Content;
+    Byte_IO.Open (File, Byte_IO.In_File, Filename);
+    declare
+      Bytes : Byte_Array_Access := new Byte_Array(1 .. Integer(Byte_IO.Size(File)));
+    begin
+      for I in Bytes'Range loop
+        Byte_IO.Read(File, Bytes(I));
+      end loop;
 
-  function Load_Bytes(File: File_Type) return Byte_Array is
-    File_Size: constant Count := Size(file);
-    Buffer : Stream_Element_Array (1 .. Stream_Element_Offset(File_Size));
-    Bytes : Byte_Array(1 .. Integer(File_Size));
-    Last: Stream_Element_Offset;
-  begin
-    Read(File, Buffer, Last);
-
-    for I in Buffer'Range loop
-      Bytes(Natural(I)) := Byte(Buffer(I));
-    end loop;
-
-    return Bytes;
-  end Load_Bytes;
+      Byte_IO.Close(File);
+      return Bytes;
+    end;
+  end;
 end Padder;

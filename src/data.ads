@@ -19,6 +19,7 @@ package Data is
   subtype Block_Range is Natural range 0 .. 15;
   type Block16 is array (Block_Range) of Word32;
   type Block_Array is array (Natural range <>) of Block16;
+  type Block_Array_Access is access Block_Array;
 
   function Empty_Block return Block16;
   function Build_Word32(Builder : Word_Builder) return Word32;
